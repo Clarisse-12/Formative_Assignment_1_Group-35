@@ -49,7 +49,6 @@ class ScheduleScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _sessionCard({
     required String title,
     required String time,
