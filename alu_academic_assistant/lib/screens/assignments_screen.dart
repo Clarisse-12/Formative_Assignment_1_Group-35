@@ -52,7 +52,6 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
       ),
       body: Column(
         children: [
-          // Yellow button
           Padding(
             padding: const EdgeInsets.all(16),
             child: SizedBox(
@@ -87,8 +86,6 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
               ),
             ),
           ),
-
-          // Assignment list
           Expanded(
             child: _assignments.isEmpty
                 ? const Center(
