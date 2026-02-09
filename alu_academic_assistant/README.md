@@ -169,6 +169,32 @@ final assignment = Assignment.fromJson(jsonDecode(storedJson));
 **SQLite Integration Ready:**
 The model's JSON serialization methods enable seamless SQLite integration for advanced data persistence.
 
+## Schedule & Attendance Logic (Veronicah)
+
+**Files:**
+- `lib/models/session.dart` - Session data model
+- `lib/logic/schedule_logic.dart` - All schedule and attendance logic
+
+**Session Model:**
+Created a Session class to store session details (title, date, times, 
+location, type) and attendance status. Added helper methods isToday() 
+and isThisWeek() for filtering.
+
+**Attendance System:**
+- Calculates attendance percentage by counting present sessions
+- Triggers warning when attendance drops below 75%
+- Maintains complete attendance history
+
+**Schedule Management Functions:**
+- Add, edit, and delete sessions
+- Filter sessions by day or week
+- Sort sessions chronologically
+- Validate form inputs before creating sessions
+
+**Integration:**
+The getDashboardData() function packages all schedule and attendance 
+data for the dashboard screen.
+
 #### Code Quality & Best Practices
 
 **Comprehensive Documentation:**
