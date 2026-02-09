@@ -21,3 +21,47 @@ void deleteSession(int index) {
     allSessions.removeAt(index);
   }
 }
+// get today's sessions
+List<Session> getTodaysSessions(DateTime today) {
+  List<Session> result = [];
+  
+  for (var session in allSessions) {
+    if (session.isToday(today)) {
+      result.add(session);
+    }
+  }
+  
+  // sort by time
+  result.sort((a, b) => a.startTime.compareTo(b.startTime));
+  return result;
+}
+
+// get this week's sessions
+List<Session> getWeeklySessions(DateTime current) {
+  List<Session> weekSessions = [];
+  
+  for (var session in allSessions) {
+    if (session.isThisWeek(current)) {
+      weekSessions.add(session);
+    }
+  }
+  
+  // sort by date then time
+  weekSessions.sort((a, b) {
+    int dateComp = a.date.compareTo(b.date);
+    if (dateComp != 0) return dateComp;
+    return a.startTime.compareTo(b.startTime);
+  });
+  
+  return weekSessions;
+}
+
+// toggle attendance
+void toggleAttendance(Session session) {
+  session.isPresent = !session.isPresent;
+}
+
+// get attendance history
+List<Session> getAttendanceHistory() {
+  return List.from(allSessions);
+}
