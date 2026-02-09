@@ -65,3 +65,21 @@ void toggleAttendance(Session session) {
 List<Session> getAttendanceHistory() {
   return List.from(allSessions);
 }
+// calculate attendance %
+double calculateAttendance() {
+  if (allSessions.isEmpty) return 0.0;
+  
+  int present = 0;
+  for (var s in allSessions) {
+    if (s.isPresent) {
+      present++;
+    }
+  }
+  
+  return (present / allSessions.length) * 100;
+}
+
+// check if attendance is  below 75%
+bool isBelowThreshold() {
+  return calculateAttendance() < 75.0;
+}
