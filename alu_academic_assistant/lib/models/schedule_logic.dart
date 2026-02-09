@@ -83,3 +83,54 @@ double calculateAttendance() {
 bool isBelowThreshold() {
   return calculateAttendance() < 75.0;
 }
+// validate session inputs this makes sure required fields are filled
+Map<String, String> validateSession({
+  required String title,
+  DateTime? date,
+  String? startTime,
+  String? endTime,
+  String? sessionType,
+}) {
+  Map<String, String> errors = {};
+  
+  // check title
+  if (title.trim().isEmpty) {
+    errors['title'] = 'Title is required';
+  }
+  
+  // check date
+  if (date == null) {
+    errors['date'] = 'Please select a date';
+  }
+  
+  // check start time
+  if (startTime == null || startTime.isEmpty) {
+    errors['startTime'] = 'Start time required';
+  }
+  
+  // check end time
+  if (endTime == null || endTime.isEmpty) {
+    errors['endTime'] = 'End time required';
+  }
+  
+  // validate times
+  if (startTime != null && endTime != null) {
+    if (startTime.compareTo(endTime) >= 0) {
+      errors['time'] = 'End time must be after start time';
+    }
+  }
+  
+  // check session type
+  List<String> validTypes = [
+    'Class',
+    'Mastery Session',
+    'Study Group',
+    'PSL Meeting'
+  ];
+  
+  if (sessionType == null || !validTypes.contains(sessionType)) {
+    errors['sessionType'] = 'Please select a valid session type';
+  }
+  
+  return errors;
+}
