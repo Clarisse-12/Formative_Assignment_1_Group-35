@@ -31,7 +31,7 @@ class Session {
     DateTime weekStart = checkDate.subtract(Duration(days: checkDate.weekday - 1));
     DateTime weekEnd = weekStart.add(Duration(days: 6));
     
-    // check if date is between start and end
+      // see if date falls in the week
     return date.isAfter(weekStart.subtract(Duration(days: 1))) && 
            date.isBefore(weekEnd.add(Duration(days: 1)));
   }
