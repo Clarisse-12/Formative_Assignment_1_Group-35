@@ -1,50 +1,33 @@
 import 'package:intl/intl.dart';
 
-/// Utility Helper Functions for ALU Academic Assistant
-///
-/// This class provides helper methods for date formatting, week calculations,
-/// and other utility functions needed throughout the app.
-
 class Helpers {
-  /// Get current academic week number
-  /// ALU academic calendar typically runs for 15 weeks per term
-  /// Week 1 starts from a configured term start date
   static int getAcademicWeek(DateTime currentDate) {
-    // ALU Term 2 2026 assumed to start on January 5, 2026 (Monday)
-    // Adjust this date based on actual term start
     DateTime termStart = DateTime(2026, 1, 5);
 
     int daysDifference = currentDate.difference(termStart).inDays;
     int weekNumber = (daysDifference / 7).floor() + 1;
-
-    // Clamp between 1 and 15 weeks
     if (weekNumber < 1) return 1;
     if (weekNumber > 15) return 15;
 
     return weekNumber;
   }
 
-  /// Format date to readable string (e.g., "February 9, 2026")
   static String formatDateLong(DateTime date) {
     return DateFormat('MMMM d, y').format(date);
   }
 
-  /// Format date to short string (e.g., "Feb 9")
   static String formatDateShort(DateTime date) {
     return DateFormat('MMM d').format(date);
   }
 
-  /// Format date with day of week (e.g., "Monday, Feb 9")
   static String formatDateWithDay(DateTime date) {
     return DateFormat('EEEE, MMM d').format(date);
   }
 
-  /// Get day of week (e.g., "Monday")
   static String getDayOfWeek(DateTime date) {
     return DateFormat('EEEE').format(date);
   }
 
-  /// Format time from string "HH:mm" format
   static String formatTime(String time) {
     try {
       final parts = time.split(':');
@@ -60,7 +43,6 @@ class Helpers {
     }
   }
 
-  /// Calculate days until a date
   static int daysUntil(DateTime targetDate) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -69,7 +51,6 @@ class Helpers {
     return target.difference(today).inDays;
   }
 
-  /// Check if date is today
   static bool isToday(DateTime date) {
     final now = DateTime.now();
     return date.year == now.year &&
@@ -77,13 +58,12 @@ class Helpers {
         date.day == now.day;
   }
 
-  /// Check if date is within next 7 days
+  //  double check for 7 days date
   static bool isWithinNextSevenDays(DateTime date) {
     final daysUntilDate = daysUntil(date);
     return daysUntilDate >= 0 && daysUntilDate <= 7;
   }
 
-  /// Get greeting based on time of day
   static String getGreeting() {
     final hour = DateTime.now().hour;
 
@@ -92,7 +72,6 @@ class Helpers {
     return 'Good Evening';
   }
 
-  /// Get attendance status color and message
   static Map<String, dynamic> getAttendanceStatus(double percentage) {
     if (percentage >= 75) {
       return {
@@ -103,29 +82,27 @@ class Helpers {
     } else if (percentage >= 60) {
       return {
         'status': 'Warning',
-        'color': 0xFFFDB827, // Yellow
-        'message': 'Attendance needs improvement',
+        'color': 0xFFFDB827,
+        'message': 'Attendance needs more work',
       };
     } else {
       return {
         'status': 'Critical',
-        'color': 0xFFDC3545, // Red
-        'message': 'AT RISK - Attendance critically low',
+        'color': 0xFFDC3545,
+        'message': 'AT RISK - Attendance is not good',
       };
     }
   }
 
-  /// Format assignment due date with context
   static String formatDueDate(DateTime dueDate) {
     final days = daysUntil(dueDate);
 
     if (days < 0) return 'Overdue';
-    if (days == 0) return 'Due Today';
-    if (days == 1) return 'Due Tomorrow';
+    if (days == 0) return 'Due today';
+    if (days == 1) return 'Due tomorrow';
     return 'Due ${formatDateShort(dueDate)}';
   }
 
-  /// Generate unique ID based on timestamp
   static String generateId() {
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
