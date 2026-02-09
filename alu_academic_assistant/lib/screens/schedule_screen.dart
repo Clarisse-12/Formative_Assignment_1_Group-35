@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import '../logic/schedule_logic.dart';
+import '../models/session.dart';
+import '../utils/helpers.dart';
 
 class ScheduleScreen extends StatelessWidget {
   const ScheduleScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final weeklySessions = getWeeklySessions(today);
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A1A3A),
       appBar: AppBar(
@@ -12,74 +18,46 @@ class ScheduleScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF0A1A3A),
         elevation: 0,
       ),
-      body: ListView(
-        children: [
-          _dayHeader('Monday'),
-          _sessionCard(
-            title: 'Mobile App Development',
-            time: '09:00 - 11:00',
-            location: 'Room B2',
-          ),
-          _sessionCard(
-            title: 'Software Engineering',
-            time: '13:00 - 15:00',
-            location: 'Room C1',
-          ),
-          _dayHeader('Tuesday'),
-          _sessionCard(
-            title: 'Data Structures',
-            time: '10:00 - 12:00',
-            location: 'Room A3',
-          ),
-        ],
-      ),
-    );
-  }
+      body: weeklySessions.isEmpty
+          ? const Center(
+              child: Text(
+                'No sessions scheduled',
+                style: TextStyle(color: Colors.white70),
+              ),
+            )
+          : ListView.builder(
+              itemCount: weeklySessions.length,
+              itemBuilder: (context, index) {
+                final Session session = weeklySessions[index];
 
-  Widget _dayHeader(String day) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(
-        day,
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.amber,
-        ),
-      ),
-    );
-  }
-  Widget _sessionCard({
-    required String title,
-    required String time,
-    required String location,
-  }) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: ListTile(
-        leading: const Icon(Icons.school),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text('$time • $location'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () {},
+                return Card(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: ListTile(
+                    leading: const Icon(Icons.school),
+                    title: Text(
+                      session.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '${Helpers.formatDateWithDay(session.date)} • '
+                      '${Helpers.formatTime(session.startTime)} - '
+                      '${Helpers.formatTime(session.endTime)}'
+                      '${session.location != null ? ' • ${session.location}' : ''}',
+                    ),
+                    trailing: Checkbox(
+                      value: session.isPresent,
+                      onChanged: (_) {
+                        toggleAttendance(session);
+                      },
+                    ),
+                  ),
+                );
+              },
             ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () {},
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

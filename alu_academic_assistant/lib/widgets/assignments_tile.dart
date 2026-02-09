@@ -1,62 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../models/assignment.dart';
-
 
 class AssignmentTile extends StatelessWidget {
   final Assignment assignment;
+  final Function(bool?) onToggleComplete;
   final VoidCallback onDelete;
-  final ValueChanged<bool?> onToggleComplete;
+  final VoidCallback onEdit;
 
   const AssignmentTile({
     super.key,
     required this.assignment,
-    required this.onDelete,
     required this.onToggleComplete,
+    required this.onDelete,
+    required this.onEdit,
   });
+
+  Color _priorityColor(String priority) {
+    switch (priority) {
+      case 'High':
+        return Colors.redAccent;
+      case 'Medium':
+        return Colors.orangeAccent;
+      default:
+        return Colors.greenAccent;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Checkbox(
-              value: assignment.isCompleted,
-              onChanged: onToggleComplete,
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    assignment.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                 Text(
-  'Due ${DateFormat('MMM d').format(assignment.dueDate)}',
-  style: TextStyle(color: Colors.grey[600]),
-),
-                ],
-              ),
-            ),
-            
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: onDelete,
-            ),
-          ],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Checkbox(
+          value: assignment.isCompleted,
+          onChanged: onToggleComplete,
         ),
+        title: Text(
+          assignment.title,
+          style: TextStyle(
+            decoration:
+                assignment.isCompleted ? TextDecoration.lineThrough : null,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Text(
+          '${assignment.courseName}\nDue: ${assignment.dueDate.toLocal().toString().split(' ')[0]}',
+        ),
+        isThreeLine: true,
+        trailing: PopupMenuButton(
+          itemBuilder: (_) => [
+            const PopupMenuItem(value: 'edit', child: Text('Edit')),
+            const PopupMenuItem(value: 'delete', child: Text('Delete')),
+          ],
+          onSelected: (value) {
+            if (value == 'delete') onDelete();
+            if (value == 'edit') onEdit();
+          },
+        ),
+        tileColor: _priorityColor(assignment.priority).withOpacity(0.15),
       ),
     );
   }
