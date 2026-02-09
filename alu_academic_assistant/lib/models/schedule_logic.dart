@@ -134,3 +134,11 @@ Map<String, String> validateSession({
   
   return errors;
 }
+// get data for dashboard
+Map<String, dynamic> getDashboardData(DateTime current) {
+  return {
+    'todaySessions': getTodaysSessions(current),
+    'attendance': calculateAttendance(),
+    'showWarning': isBelowThreshold(),
+  };
+}
