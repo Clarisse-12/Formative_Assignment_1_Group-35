@@ -42,7 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           startTime: '09:00',
           endTime: '11:00',
           location: 'Lab 3',
-          sessionType: 'Lecture',
+          sessionType: 'Class',
           isPresent: true,
         ),
         Session(
@@ -51,7 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           startTime: '14:00',
           endTime: '16:00',
           location: 'Room 201',
-          sessionType: 'Tutorial',
+          sessionType: 'Study Group',
           isPresent: true,
         ),
         Session(
@@ -60,10 +60,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           startTime: '10:00',
           endTime: '12:00',
           location: 'Lab 1',
-          sessionType: 'Lecture',
+          sessionType: 'Mastery Session',
           isPresent: false,
         ),
       ]);
+    }
+  }
+
+  Color _getSessionTypeColor(String sessionType) {
+    switch (sessionType) {
+      case 'Class':
+        return ALUColors.infoBlue;
+      case 'Mastery Session':
+        return ALUColors.accentYellow;
+      case 'Study Group':
+        return ALUColors.successGreen;
+      case 'PSL Meeting':
+        return Color(0xFFB794F4);
+      default:
+        return ALUColors.textGray;
     }
   }
 
@@ -268,14 +283,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
           (a) => !a.isCompleted && Helpers.isWithinNextSevenDays(a.dueDate),
         )
         .length;
+    final attendance = calculateAttendance();
+    final isBelowLimit = isBelowThreshold();
 
-    return Row(
+    return Column(
       children: [
-        Expanded(child: _buildStatCard('$pending', 'Actual\nProjects')),
-        const SizedBox(width: 12),
-        Expanded(child: _buildStatCard('$missed', 'Core\nfailures')),
-        const SizedBox(width: 12),
-        Expanded(child: _buildStatCard('$upcoming', 'Upcoming\nAssessm')),
+        Row(
+          children: [
+            Expanded(child: _buildStatCard('$pending', 'Actual\nProjects')),
+            const SizedBox(width: 12),
+            Expanded(child: _buildStatCard('$missed', 'Core\nfailures')),
+            const SizedBox(width: 12),
+            Expanded(child: _buildStatCard('$upcoming', 'Upcoming\nAssessm')),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildAttendanceCard(attendance, isBelowLimit),
       ],
     );
   }
@@ -308,6 +331,119 @@ class _DashboardScreenState extends State<DashboardScreen> {
               height: 1.3,
             ),
           ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildAttendanceCard(
+    double attendance,
+    bool isBelowLimit,
+  ) => HoverableCard(
+    child: Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ALUColors.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isBelowLimit
+              ? ALUColors.warningRed.withOpacity(0.5)
+              : ALUColors.successGreen.withOpacity(0.5),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isBelowLimit
+                  ? ALUColors.warningRed.withOpacity(0.2)
+                  : ALUColors.successGreen.withOpacity(0.2),
+            ),
+            child: Center(
+              child: Icon(
+                isBelowLimit ? Icons.warning_amber_rounded : Icons.check_circle,
+                color: isBelowLimit
+                    ? ALUColors.warningRed
+                    : ALUColors.successGreen,
+                size: 32,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Attendance',
+                  style: TextStyle(color: ALUColors.textGray, fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${attendance.toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        color: isBelowLimit
+                            ? ALUColors.warningRed
+                            : ALUColors.successGreen,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        '${allSessions.where((s) => s.isPresent).length}/${allSessions.length}',
+                        style: TextStyle(
+                          color: ALUColors.textGray,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (isBelowLimit)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: ALUColors.warningRed.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Below 75%',
+                style: TextStyle(
+                  color: ALUColors.warningRed,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: ALUColors.successGreen.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Good',
+                style: TextStyle(
+                  color: ALUColors.successGreen,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
         ],
       ),
     ),
@@ -382,17 +518,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: s.sessionType == 'Lecture'
-                  ? ALUColors.infoBlue.withOpacity(0.2)
-                  : ALUColors.accentYellow.withOpacity(0.2),
+              color: _getSessionTypeColor(s.sessionType).withOpacity(0.2),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               s.sessionType,
               style: TextStyle(
-                color: s.sessionType == 'Lecture'
-                    ? ALUColors.infoBlue
-                    : ALUColors.accentYellow,
+                color: _getSessionTypeColor(s.sessionType),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
