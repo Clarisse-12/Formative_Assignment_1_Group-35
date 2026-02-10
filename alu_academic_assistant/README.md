@@ -39,6 +39,362 @@ The ALU Academic Assistant is a personal academic management tool that integrate
 
 ## Component Documentation
 
+### Dashboard Module
+
+The Dashboard provides a comprehensive real-time overview of academic status, commitments, and performance metrics. It serves as the central hub for monitoring assignments, attendance, and scheduled sessions.
+
+#### Files Included
+- **`lib/screens/dashboard_screen.dart`** - Main dashboard interface
+- **`lib/utils/helpers.dart`** - Helper utilities for date/time formatting
+- **`lib/logic/schedule_logic.dart`** - Session management logic
+- **`lib/widgets/hoverable_card.dart`** - Interactive card widget
+
+#### Dashboard Features
+
+##### 1. Date & Academic Week Display
+Displays current date with day of week and calculates academic week number based on term start date.
+
+```dart
+// Helper method to calculate academic week
+static int getAcademicWeek(DateTime currentDate) {
+  DateTime termStart = DateTime(2026, 1, 5);
+  int daysDifference = currentDate.difference(termStart).inDays;
+  int weekNumber = (daysDifference / 7).floor() + 1;
+  if (weekNumber < 1) return 1;
+  if (weekNumber > 15) return 15;
+  return weekNumber;
+}
+
+// Display implementation
+Text(
+  Helpers.formatDateWithDay(today), // "Monday, Feb 10"
+  style: const TextStyle(
+    color: ALUColors.textWhite,
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+  ),
+),
+Text(
+  'Academic Week ${Helpers.getAcademicWeek(today)}', // "Academic Week 6"
+  style: TextStyle(color: ALUColors.textGray, fontSize: 14),
+),
+```
+
+##### 2. Course Filter Dropdown
+Filter dashboard content by selecting specific courses or view all courses.
+
+```dart
+Widget _buildDropdown() => Container(
+  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+  decoration: BoxDecoration(
+    color: ALUColors.cardBackground,
+    borderRadius: BorderRadius.circular(8),
+  ),
+  child: DropdownButton<String>(
+    value: 'All Selected Courses',
+    items: const [
+      DropdownMenuItem(value: 'All Selected Courses', child: Text('All Selected Courses')),
+      DropdownMenuItem(value: 'Mobile Development', child: Text('Mobile Development')),
+      DropdownMenuItem(value: 'Software Engineering', child: Text('Software Engineering')),
+    ],
+    onChanged: (value) {
+      // Filter logic here
+    },
+  ),
+);
+```
+
+##### 3. Statistics Cards
+Three key metrics displayed in a row:
+- **Actual Projects**: Count of pending assignments
+- **Core Failures**: Count of missed sessions
+- **Upcoming Assessments**: Assignments due within 7 days
+
+```dart
+Widget _buildStats() {
+  final pending = _assignments.where((a) => !a.isCompleted).length;
+  final missed = allSessions.where((s) => !s.isPresent).length;
+  final upcoming = _assignments
+      .where((a) => !a.isCompleted && Helpers.isWithinNextSevenDays(a.dueDate))
+      .length;
+
+  return Row(
+    children: [
+      Expanded(child: _buildStatCard('$pending', 'Actual\nProjects')),
+      const SizedBox(width: 12),
+      Expanded(child: _buildStatCard('$missed', 'Core\nfailures')),
+      const SizedBox(width: 12),
+      Expanded(child: _buildStatCard('$upcoming', 'Upcoming\nAssessm')),
+    ],
+  );
+}
+```
+
+##### 4. Attendance Tracking
+Visual attendance indicator with percentage calculation, present/total session ratio, and status alerts.
+
+**Features:**
+- Real-time attendance percentage calculation
+- Color-coded status: Green (≥75% - Good), Red (<75% - Below threshold)
+- Visual warning indicators for at-risk students
+- Shows present sessions vs total sessions
+
+```dart
+// Attendance calculation logic
+double calculateAttendance() {
+  if (allSessions.isEmpty) return 0.0;
+  int present = allSessions.where((s) => s.isPresent).length;
+  return (present / allSessions.length) * 100;
+}
+
+bool isBelowThreshold() {
+  return calculateAttendance() < 75.0;
+}
+
+// Attendance card display
+Widget _buildAttendanceCard(double attendance, bool isBelowLimit) => Container(
+  padding: const EdgeInsets.all(16),
+  decoration: BoxDecoration(
+    color: ALUColors.cardBackground,
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(
+      color: isBelowLimit
+          ? ALUColors.warningRed.withOpacity(0.5)
+          : ALUColors.successGreen.withOpacity(0.5),
+      width: 2,
+    ),
+  ),
+  child: Row(
+    children: [
+      Icon(
+        isBelowLimit ? Icons.warning_amber_rounded : Icons.check_circle,
+        color: isBelowLimit ? ALUColors.warningRed : ALUColors.successGreen,
+        size: 32,
+      ),
+      Text(
+        '${attendance.toStringAsFixed(1)}%',
+        style: TextStyle(
+          color: isBelowLimit ? ALUColors.warningRed : ALUColors.successGreen,
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      // Status badge
+      Container(
+        child: Text(
+          isBelowLimit ? 'Below 75%' : 'Good',
+          style: TextStyle(
+            color: isBelowLimit ? ALUColors.warningRed : ALUColors.successGreen,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    ],
+  ),
+);
+```
+
+##### 5. Today's Classes
+Displays all scheduled sessions for the current day with time, location, and session type.
+
+```dart
+// Get today's sessions from schedule logic
+List<Session> getTodaysSessions(DateTime today) {
+  List<Session> result = allSessions
+      .where((session) => session.isToday(today))
+      .toList();
+  
+  // Sort by start time
+  result.sort((a, b) => a.startTime.compareTo(b.startTime));
+  return result;
+}
+
+// Session card display
+Widget _buildSessionCard(Session s) => Container(
+  padding: const EdgeInsets.all(16),
+  decoration: BoxDecoration(
+    color: ALUColors.cardBackground,
+    borderRadius: BorderRadius.circular(12),
+  ),
+  child: Row(
+    children: [
+      // Color indicator bar
+      Container(
+        width: 4,
+        height: 50,
+        decoration: BoxDecoration(
+          color: ALUColors.accentYellow,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(s.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Row(
+              children: [
+                Icon(Icons.access_time, size: 14),
+                Text('${Helpers.formatTime(s.startTime)} - ${Helpers.formatTime(s.endTime)}'),
+                Icon(Icons.location_on, size: 14),
+                Text(s.location ?? ''),
+              ],
+            ),
+          ],
+        ),
+      ),
+      // Session type badge
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: _getSessionTypeColor(s.sessionType).withOpacity(0.2),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(s.sessionType, style: TextStyle(fontSize: 11)),
+      ),
+    ],
+  ),
+);
+```
+
+**Session Type Color Coding:**
+```dart
+Color _getSessionTypeColor(String sessionType) {
+  switch (sessionType) {
+    case 'Class': return ALUColors.infoBlue;
+    case 'Mastery Session': return ALUColors.accentYellow;
+    case 'Study Group': return ALUColors.successGreen;
+    case 'PSL Meeting': return Color(0xFFB794F4); // Purple
+    default: return ALUColors.textGray;
+  }
+}
+```
+
+##### 6. Upcoming Assignments
+Shows assignments due within the next 7 days with urgency indicators.
+
+```dart
+// Filter upcoming assignments
+final upcoming = _assignments
+    .where((a) => !a.isCompleted && Helpers.isWithinNextSevenDays(a.dueDate))
+    .toList()
+  ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+
+// Check if within 7 days
+static bool isWithinNextSevenDays(DateTime date) {
+  final daysUntilDate = daysUntil(date);
+  return daysUntilDate >= 0 && daysUntilDate <= 7;
+}
+
+// Assignment card with urgency indicator
+Widget _buildAssignmentCard(Assignment a) {
+  final isUrgent = Helpers.daysUntil(a.dueDate) <= 2;
+  
+  return Container(
+    decoration: BoxDecoration(
+      color: ALUColors.cardBackground,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: isUrgent
+            ? ALUColors.warningRed.withOpacity(0.5)  // Red border if urgent
+            : ALUColors.textGray.withOpacity(0.2),
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(a.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        Text(
+          Helpers.formatDueDate(a.dueDate), // "Due in 2 days" or "Overdue"
+          style: TextStyle(
+            color: isUrgent ? ALUColors.warningRed : ALUColors.textGray,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+```
+
+##### 7. Visual Design & User Experience
+- **Background**: Overlay gradient on student background image
+- **Hoverable Cards**: Interactive feedback on card hover
+- **Pull-to-Refresh**: Swipe down to refresh dashboard data
+- **Color-Coded Elements**: Status-based color indicators throughout
+
+```dart
+// Background with gradient overlay
+Stack(
+  children: [
+    Positioned.fill(
+      child: Image.asset(
+        'assets/images/students_background.jpg',
+        fit: BoxFit.cover,
+      ),
+    ),
+    Positioned.fill(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              ALUColors.backgroundDark.withOpacity(0.85),
+              ALUColors.backgroundDark.withOpacity(0.92),
+              ALUColors.backgroundDark.withOpacity(0.95),
+            ],
+          ),
+        ),
+      ),
+    ),
+    // Dashboard content
+  ],
+);
+
+// Pull-to-refresh functionality
+RefreshIndicator(
+  onRefresh: () async => setState(() {}),
+  child: SingleChildScrollView(
+    physics: const AlwaysScrollableScrollPhysics(),
+    child: /* Dashboard content */,
+  ),
+);
+```
+
+#### Helper Utilities
+
+**Date & Time Formatting:**
+```dart
+// Format examples
+Helpers.formatDateWithDay(DateTime.now());    // "Monday, Feb 10"
+Helpers.formatDateLong(DateTime.now());       // "February 10, 2026"
+Helpers.formatDateShort(DateTime.now());      // "Feb 10"
+Helpers.formatTime("14:30");                  // "2:30 PM"
+Helpers.getDayOfWeek(DateTime.now());         // "Monday"
+
+// Date calculations
+Helpers.daysUntil(dueDate);                   // Days until target date
+Helpers.isToday(date);                        // Check if date is today
+Helpers.isWithinNextSevenDays(date);          // Check if within 7 days
+```
+
+**Attendance Status:**
+```dart
+Map<String, dynamic> getAttendanceStatus(double percentage) {
+  if (percentage >= 75) {
+    return {'status': 'Good', 'color': 0xFF28A745, 'message': 'Keep up the good work!'};
+  } else if (percentage >= 60) {
+    return {'status': 'Warning', 'color': 0xFFFDB827, 'message': 'Attendance needs more work'};
+  } else {
+    return {'status': 'Critical', 'color': 0xFFDC3545, 'message': 'AT RISK - Attendance is not good'};
+  }
+}
+```
+
+---
+
 ### Assignment Creation Module (Phillip's Component)
 
 The assignment creation module provides a comprehensive interface for students to add and edit assignments with full form validation and intuitive date/priority selection.
